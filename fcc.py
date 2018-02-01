@@ -3,6 +3,7 @@ import urllib
 import urllib2
 import re
 import thread
+import HTMLParser
 
 class FCC:
   def __init__(self):
@@ -18,9 +19,11 @@ class FCC:
   def getAnswer(self, input):
     self.question = input
     pageCode = self.getPage()
-    # pattern = re.compile(r'<div class="List-item" data-reactid=(.*)')
-    # item = re.search(pattern,pageCode)
-    # print item.group(1)
+    pattern = re.compile(r'<div class="List-item" data-reactid=(.*)')
+    item = re.search(pattern,pageCode)
+    html_parser = HTMLParser.HTMLParser()
+
+    print html_parser.unescape(item.group(1))
   #获取一次page从知乎
   def getPage(self):
     try:
@@ -32,10 +35,9 @@ class FCC:
       #利用urlopen获取页面代码
       response = urllib2.urlopen(request)
       #将页面转化为UTF-8编码
+      html_parser = HTMLParser.HTMLParser()
       pageCode = response.read().decode('utf-8')
-      print pageCode
-
-
+      pageCode = html_parser.unescape(pageCode)
       return pageCode
     except urllib2.URLError, e:
       if hasattr(e,"reason"):
