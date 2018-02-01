@@ -29,7 +29,7 @@ class Loopring:
 
         except urllib2.URLError, e:
             if hasattr(e,"reason"):
-                print u"连接feixiaohao失败,错误原因",e.reason
+                print u"连接知乎失败,错误原因",e.reason
                 return None
 
     #调用该方法，获取一次loopring价格
@@ -39,9 +39,10 @@ class Loopring:
         pattern2 = re.compile(r'<span class="tags-red">.(.*)</span>')
         item1 = re.search(pattern1,pageCode)
         item2 = re.search(pattern2,pageCode)
-        price = input(item1.group(1))
-        percentage = input(item2.group(1))
-        print(price+ '/n' +percentage)
+        # price = input(item1.group(1))
+        # percentage = input(item2.group(1))
+        # print(price+ '/n' +percentage)
+        print pageCode
 
 
     #开始方法
