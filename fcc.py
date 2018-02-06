@@ -4,6 +4,7 @@ import urllib2
 import re
 import thread
 import HTMLParser
+from bs4 import BeautifulSoup
 
 class FCC:
   def __init__(self):
@@ -19,11 +20,14 @@ class FCC:
   def getAnswer(self, input):
     self.question = input
     pageCode = self.getPage()
-    pattern = re.compile(r'<div class="List-item" data-reactid=(.*)')
-    item = re.search(pattern,pageCode)
-    html_parser = HTMLParser.HTMLParser()
+    # 获取搜索结果列表
+    contentList = pageCode.find_all('span', {'class': 'Highlight'})
+    for item in contentList:
+      parent = item.parent
+      # print parent
+      # print item
+      print item.get_text()
 
-    print html_parser.unescape(item.group(1))
   #获取一次page从知乎
   def getPage(self):
     try:
@@ -38,7 +42,9 @@ class FCC:
       html_parser = HTMLParser.HTMLParser()
       pageCode = response.read().decode('utf-8')
       pageCode = html_parser.unescape(pageCode)
-      return pageCode
+      # 使用BeautifulSoup格式化html
+      soup = BeautifulSoup(pageCode, 'lxml')
+      return soup
     except urllib2.URLError, e:
       if hasattr(e,"reason"):
         print u"连接失败,错误原因",e.reason
