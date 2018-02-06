@@ -1,4 +1,5 @@
-# -*- coding:utf-8 -*-
+# zhihu.py
+# coding:utf-8
 import urllib
 import urllib2
 import re
@@ -6,7 +7,8 @@ import thread
 import HTMLParser
 from bs4 import BeautifulSoup
 
-class FCC:
+class ZhiHu:
+  #构造函数，在类初始化的时候调用
   def __init__(self):
     #存放程序是否继续运行的变量
     self.enable = False
@@ -21,12 +23,16 @@ class FCC:
     self.question = input
     pageCode = self.getPage()
     # 获取搜索结果列表
+    # contentList = pageCode.find_all('span', {'class': 'Highlight'})
     contentList = pageCode.find_all('span', {'class': 'Highlight'})
+    lastItem = '' 
     for item in contentList:
       parent = item.parent
       # print parent
       # print item
       print item.get_text()
+      lastItem=item.get_text()
+    return lastItem
 
   #获取一次page从知乎
   def getPage(self):
@@ -53,11 +59,12 @@ class FCC:
   def start(self):
     self.enable = True
     while self.enable:
+      print 'please enter question which you want to know:'
       input = raw_input()
       if input == 'Q':
           self.enable = False
       else:
           self.getAnswer(input)
 
-fcc = FCC()
-fcc.start()
+#zhihu = ZhiHu()
+#zhihu.start()
