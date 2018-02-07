@@ -24,9 +24,13 @@ class FCC:
     contentList = pageCode.find_all('span', {'class': 'Highlight'})
     for item in contentList:
       parent = item.parent
-      # print parent
-      # print item
-      print item.get_text()
+      if(parent.name == 'a'):
+        if(parent['href'].find('zhuanlan.zhihu.com')):
+          url = 'https:' + parent['href']
+        else:
+          url = 'https://www.zhihu.com' + parent['href']
+        print item.get_text()
+        print url
 
   #获取一次page从知乎
   def getPage(self):
