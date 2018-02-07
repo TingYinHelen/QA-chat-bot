@@ -6,6 +6,11 @@ import re
 import thread
 import HTMLParser
 from bs4 import BeautifulSoup
+import sys
+
+# 解决UnicodeEncodeError: 'ascii' codec can't encode characte
+reload(sys)
+sys.setdefaultencoding("utf-8")
 
 class ZhiHu:
   #构造函数，在类初始化的时候调用
@@ -27,7 +32,7 @@ class ZhiHu:
     content = pageCode.find_all('div', {'class': 'Card'})
     for item in content:
       # 删除专栏部分
-      if(len(item['class'])==2):
+      if(len(item['class'])>1):
         content.remove(item)
 
     # 查找List-item
@@ -49,18 +54,26 @@ class ZhiHu:
       vote = voteList[index].get_text()
       # 题目
       title = contentList[index].find_all('span', {'class': 'Highlight'})[0].get_text()
-      # 评论数
+      # print type(title)
+      pattern = re.compile(r'<em>')
+      # title = re.sub(r'<em>|</em>|<span>|</span>', '', str(title))
       comment = commentList[index].get_text()
+      if(comment.find('添加评论')>0):
+        comment = '0条评论'
 
-      lastItem += title + ' Vote:'+ vote + ' ' + comment + '\n'
-      parent = contentList[index].parent
+      lastItem += 'Title: ' + title + '\n'
+      lastItem += 'Vote:' + vote + '\n'
+      lastItem += 'Comment:' + comment + '\n'
+      parent = contentList[index].find_all('span', {'class': 'Highlight'})[0].parent
+      url = ''
       if(parent.name == 'a'):
-        if(parent['href'].find('zhuanlan.zhihu.com')):
+        if(parent['href'].find('zhuanlan.zhihu.com')>0):
           url = 'https:' + parent['href']
         else:
           url = 'https://www.zhihu.com' + parent['href']
         lastItem += url  + '\n'
-    print lastItem
+        lastItem += '================ \n'
+      # print lastItem
     return lastItem
 
   #获取一次page从知乎
