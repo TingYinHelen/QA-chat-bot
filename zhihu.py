@@ -1,4 +1,5 @@
-# -*- coding:utf-8 -*-
+# zhihu.py
+# coding:utf-8
 import urllib
 import urllib2
 import re
@@ -6,7 +7,8 @@ import thread
 import HTMLParser
 from bs4 import BeautifulSoup
 
-class FCC:
+class ZhiHu:
+  #构造函数，在类初始化的时候调用
   def __init__(self):
     #存放程序是否继续运行的变量
     self.enable = False
@@ -21,16 +23,45 @@ class FCC:
     self.question = input
     pageCode = self.getPage()
     # 获取搜索结果列表
-    contentList = pageCode.find_all('span', {'class': 'Highlight'})
-    for item in contentList:
-      parent = item.parent
+
+    content = pageCode.find_all('div', {'class': 'Card'})
+    for item in content:
+      # 删除专栏部分
+      if(len(item['class'])==2):
+        content.remove(item)
+
+    # 查找List-item
+    contentList = content[0].find_all('div', {'class': 'List-item'})
+
+    # 获取vote的class 匹配
+    def upVoteClass(css_class):
+      return css_class is not None and (css_class == 'Button VoteButton VoteButton--up' or css_class == 'Button LikeButton ContentItem-action')
+
+    # 获取vote数列表
+    voteList = pageCode.find_all('button', upVoteClass)
+
+    #获取评论数列表
+    commentList = pageCode.find_all('button', {'class': 'Button ContentItem-action Button--plain Button--withIcon Button--withLabel'})
+
+    lastItem = ''
+    for index in range(len(contentList)):
+      # 投票
+      vote = voteList[index].get_text()
+      # 题目
+      title = contentList[index].find_all('span', {'class': 'Highlight'})[0].get_text()
+      # 评论数
+      comment = commentList[index].get_text()
+
+      lastItem += title + ' Vote:'+ vote + ' ' + comment + '\n'
+      parent = contentList[index].parent
       if(parent.name == 'a'):
         if(parent['href'].find('zhuanlan.zhihu.com')):
           url = 'https:' + parent['href']
         else:
           url = 'https://www.zhihu.com' + parent['href']
-        print item.get_text()
-        print url
+        lastItem += url  + '\n'
+    print lastItem
+    return lastItem
 
   #获取一次page从知乎
   def getPage(self):
@@ -57,11 +88,12 @@ class FCC:
   def start(self):
     self.enable = True
     while self.enable:
+      print 'please enter question which you want to know:'
       input = raw_input()
       if input == 'Q':
           self.enable = False
       else:
           self.getAnswer(input)
 
-fcc = FCC()
-fcc.start()
+# zhihu = ZhiHu()
+# zhihu.start()
