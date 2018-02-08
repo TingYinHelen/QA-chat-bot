@@ -37,26 +37,25 @@ class ZhiHu:
 
     # 查找List-item
     contentList = content[0].find_all('div', {'class': 'List-item'})
-
     # 获取vote的class 匹配
     def upVoteClass(css_class):
       return css_class is not None and (css_class == 'Button VoteButton VoteButton--up' or css_class == 'Button LikeButton ContentItem-action')
 
     # 获取vote数列表
     voteList = pageCode.find_all('button', upVoteClass)
-
     #获取评论数列表
     commentList = pageCode.find_all('button', {'class': 'Button ContentItem-action Button--plain Button--withIcon Button--withLabel'})
-
     lastItem = ''
     for index in range(len(contentList)):
       # 投票
+      print 'index:', index
+      print 'vote len:', len(voteList)
+      print 'contentList len:', len(contentList)
+
       vote = voteList[index].get_text()
+
       # 题目
       title = contentList[index].find_all('span', {'class': 'Highlight'})[0].get_text()
-      # print type(title)
-      pattern = re.compile(r'<em>')
-      # title = re.sub(r'<em>|</em>|<span>|</span>', '', str(title))
       comment = commentList[index].get_text()
       if(comment.find('添加评论')>0):
         comment = '0条评论'
@@ -73,7 +72,8 @@ class ZhiHu:
           url = 'https://www.zhihu.com' + parent['href']
         lastItem += url  + '\n'
         lastItem += '================ \n'
-      # print lastItem
+
+        print lastItem
     return lastItem
 
   #获取一次page从知乎
