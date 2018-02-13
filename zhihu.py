@@ -27,53 +27,44 @@ class ZhiHu:
   def getAnswer(self, input):
     self.question = input
     pageCode = self.getPage()
+
+    formatPage = pageCode.prettify()
+    formatFo = open('formatPage.html', "wb")
+    formatFo.write(formatPage)
+    formatFo.close()
+
+    pageCode = str(pageCode)
+    patterCard = re.compile(r'<div class="Card" data-reactid="\d+">(.*?)</div><div class="SearchSideBar"')
+    cardContent = patterCard.findall(pageCode)[0]
+    # print 'pageCode:', cardContent
+
+    # 将pageCode写进文件(无格式化)
+    fo = open('page.html', "wb")
+    fo.write(cardContent)
+    fo.close()
+
     # 获取搜索结果列表
+    # 问答：
+    patternAnswerItem = re.compile(r'<div class="List-item" data-reactid="\d*"><div class="ContentItem AnswerItem".*?<span class="Highlight" data-reactid="[0-9]*">(.*?)</span>.*?<button aria-label="赞同" class="Button VoteButton VoteButton--up".*?><svg.*?</svg><!-- react-text: \d+ -->(\d*?)<!-- /react-text --></button><button class="Button ContentItem-action Button--plain Button--withIcon Button--withLabel".*?</svg></span><!-- react-text: \d+ -->(.*?)<!-- /react-text --></button>')
+    listItems = patternAnswerItem.findall(cardContent, re.M)
+    print '问答：'
+    # print listItems
+    for match in listItems:
+      # print match
+      print 'title:', match[0].decode('utf-8')
+      print 'vote:', match[1]
+      print 'comment:', match[2]
+    # 专栏：
+    patternArticle = re.compile(r'<div class="List-item" data-reactid="\d*"><div class="ContentItem ArticleItem".*?<span class="Highlight" data-reactid="[0-9]*">(.*?)</span>.*?<button class="Button LikeButton ContentItem-action".*?<svg.*?</svg><!-- react-text: \d+ -->(\d*?)<!-- /react-text --></button><button class="Button ContentItem-action Button--plain Button--withIcon Button--withLabel".*?</svg></span><!-- react-text: \d+ -->(.*?)<!-- /react-text --></button>')
+    listArticles = patternArticle.findall(cardContent, re.M)
+    print '专栏：'
+    for match in listArticles:
+      print 'title:', match[0].decode('utf-8')
+      print 'vote:', match[1]
+      print 'comment:', match[2]
 
-    content = pageCode.find_all('div', {'class': 'Card'})
-    for item in content:
-      # 删除专栏部分
-      if(len(item['class'])>1):
-        content.remove(item)
-
-    # 查找List-item
-    contentList = content[0].find_all('div', {'class': 'List-item'})
-    # 获取vote的class 匹配
-    def upVoteClass(css_class):
-      return css_class is not None and (css_class == 'Button VoteButton VoteButton--up' or css_class == 'Button LikeButton ContentItem-action')
-
-    # 获取vote数列表
-    voteList = pageCode.find_all('button', upVoteClass)
-    #获取评论数列表
-    commentList = pageCode.find_all('button', {'class': 'Button ContentItem-action Button--plain Button--withIcon Button--withLabel'})
+    #     print lastItem
     lastItem = ''
-    for index in range(len(contentList)):
-      # 投票
-      print 'index:', index
-      print 'vote len:', len(voteList)
-      print 'contentList len:', len(contentList)
-
-      vote = voteList[index].get_text()
-
-      # 题目
-      title = contentList[index].find_all('span', {'class': 'Highlight'})[0].get_text()
-      comment = commentList[index].get_text()
-      if(comment.find('添加评论')>0):
-        comment = '0条评论'
-
-      lastItem += 'Title: ' + title + '\n'
-      lastItem += 'Vote:' + vote + '\n'
-      lastItem += 'Comment:' + comment + '\n'
-      parent = contentList[index].find_all('span', {'class': 'Highlight'})[0].parent
-      url = ''
-      if(parent.name == 'a'):
-        if(parent['href'].find('zhuanlan.zhihu.com')>0):
-          url = 'https:' + parent['href']
-        else:
-          url = 'https://www.zhihu.com' + parent['href']
-        lastItem += url  + '\n'
-        lastItem += '================ \n'
-
-        print lastItem
     return lastItem
 
   #获取一次page从知乎
@@ -108,5 +99,5 @@ class ZhiHu:
       else:
           self.getAnswer(input)
 
-# zhihu = ZhiHu()
-# zhihu.start()
+zhihu = ZhiHu()
+zhihu.start()
