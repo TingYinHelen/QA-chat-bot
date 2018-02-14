@@ -7,7 +7,10 @@ class Crawler:
         # 投票
         self.vote = vote
         # 评论
-        self.comment = comment
+        if(comment == '添加评论'):
+            self.comment = '0条评论'
+        else:
+            self.comment = comment
         # url
         self.url = url
     # 将属性值拼成字符串
