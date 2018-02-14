@@ -5,8 +5,10 @@ import urllib2
 import re
 import thread
 import HTMLParser
-from bs4 import BeautifulSoup
 import sys
+from bs4 import BeautifulSoup
+
+from crawler import Crawler
 
 # 解决UnicodeEncodeError: 'ascii' codec can't encode characte
 reload(sys)
@@ -28,6 +30,7 @@ class ZhiHu:
     self.question = input
     pageCode = self.getPage()
 
+    # 使用Beautiful soup格式化pageCode,并写入到formatPage.html，方便查看
     formatPage = pageCode.prettify()
     formatFo = open('formatPage.html', "wb")
     formatFo.write(formatPage)
@@ -36,36 +39,57 @@ class ZhiHu:
     pageCode = str(pageCode)
     patterCard = re.compile(r'<div class="Card" data-reactid="\d+">(.*?)</div><div class="SearchSideBar"')
     cardContent = patterCard.findall(pageCode)[0]
-    # print 'pageCode:', cardContent
 
     # 将pageCode写进文件(无格式化)
     fo = open('page.html', "wb")
     fo.write(cardContent)
     fo.close()
 
+    # 生成每一条显示的list
+    def generateList(lists):
+      # 这里必须声明content是使用的全局变量中的content
+      global content
+      for match in lists:
+        url = match[0]
+        if(url.find('zhuanlan.zhihu.com')>0):
+          url = 'https:' + url
+        else:
+          url = 'https://www.zhihu.com' + url
+        title = match[1].decode('utf-8')
+        # 删除<em></em>
+        title = re.sub(r'<em>|</em>', "", title)
+        vote = match[2]
+        comment = match[3]
+        # 生成一个Crawler对象
+        itemCotent = Crawler(title, vote, comment, url)
+        content = content + itemCotent.toString()
+
+    # 最后返回的值
+    global content
+    content = ''
+
     # 获取搜索结果列表
     # 问答：
-    patternAnswerItem = re.compile(r'<div class="List-item" data-reactid="\d*"><div class="ContentItem AnswerItem".*?<span class="Highlight" data-reactid="[0-9]*">(.*?)</span>.*?<button aria-label="赞同" class="Button VoteButton VoteButton--up".*?><svg.*?</svg><!-- react-text: \d+ -->(\d*?)<!-- /react-text --></button><button class="Button ContentItem-action Button--plain Button--withIcon Button--withLabel".*?</svg></span><!-- react-text: \d+ -->(.*?)<!-- /react-text --></button>')
+    patternAnswerItem = re.compile(r'<div class="List-item" data-reactid="\d*"><div class="ContentItem AnswerItem".*?<a data-reactid="\d+" href="(/question/\d+/answer/\d+)".*?<span class="Highlight" data-reactid="[0-9]*">(.*?)</span>.*?<button aria-label="赞同" class="Button VoteButton VoteButton--up".*?><svg.*?</svg><!-- react-text: \d+ -->(.*?)<!-- /react-text -->.*?</button>.*?<button class="Button ContentItem-action Button--plain Button--withIcon Button--withLabel".*?</svg></span><!-- react-text: \d+ -->(.*?)<!-- /react-text --></button>')
+    # 找出所有匹配到的问答
     listItems = patternAnswerItem.findall(cardContent, re.M)
-    print '问答：'
-    # print listItems
-    for match in listItems:
-      # print match
-      print 'title:', match[0].decode('utf-8')
-      print 'vote:', match[1]
-      print 'comment:', match[2]
-    # 专栏：
-    patternArticle = re.compile(r'<div class="List-item" data-reactid="\d*"><div class="ContentItem ArticleItem".*?<span class="Highlight" data-reactid="[0-9]*">(.*?)</span>.*?<button class="Button LikeButton ContentItem-action".*?<svg.*?</svg><!-- react-text: \d+ -->(\d*?)<!-- /react-text --></button><button class="Button ContentItem-action Button--plain Button--withIcon Button--withLabel".*?</svg></span><!-- react-text: \d+ -->(.*?)<!-- /react-text --></button>')
-    listArticles = patternArticle.findall(cardContent, re.M)
-    print '专栏：'
-    for match in listArticles:
-      print 'title:', match[0].decode('utf-8')
-      print 'vote:', match[1]
-      print 'comment:', match[2]
+    # print 'listItems:', listItems
 
-    #     print lastItem
-    lastItem = ''
-    return lastItem
+    if(len(listItems)>0):
+      content = '问答：\n'
+    generateList(listItems)
+    # 专栏：
+    # patternArticle = re.compile(r'<div class="List-item" data-reactid="\d*"><div class="ContentItem ArticleItem".*?<a data-reactid="\d+" href="(//zhuanlan.zhihu.com/p/\d+)".*?<span class="Highlight" data-reactid="[0-9]*">(.*?)</span>.*?<button class="Button LikeButton ContentItem-action".*?<svg.*?</svg><!-- react-text: \d+ -->(\d*?)<!-- /react-text --></button><button class="Button ContentItem-action Button--plain Button--withIcon Button--withLabel".*?</svg></span><!-- react-text: \d+ -->(.*?)<!-- /react-text --></button>')
+    patternArticle = re.compile(r'<div class="List-item" data-reactid="\d*"><div class="ContentItem ArticleItem".*?<a data-reactid="\d+" href="(//zhuanlan.zhihu.com/p/\d+)".*?<span class="Highlight" data-reactid="[0-9]*">(.*?)</span>.*?<button class="Button LikeButton ContentItem-action".*?<svg.*?</svg><!-- react-text: \d+ -->(.*?)<!-- /react-text -->.*?</button>.*?<button class="Button ContentItem-action Button--plain Button--withIcon Button--withLabel".*?</svg></span><!-- react-text: \d+ -->(.*?)<!-- /react-text --></button>')
+    # 找出所有匹配到的专栏
+    listArticles = patternArticle.findall(cardContent, re.M)
+    # print 'listArticles:', listArticles
+
+    if(len(listArticles)>0):
+      content = content + '专栏：\n'
+    generateList(listArticles)
+    print content
+    return content
 
   #获取一次page从知乎
   def getPage(self):
@@ -99,5 +123,5 @@ class ZhiHu:
       else:
           self.getAnswer(input)
 
-zhihu = ZhiHu()
-zhihu.start()
+# zhihu = ZhiHu()
+# zhihu.start()
